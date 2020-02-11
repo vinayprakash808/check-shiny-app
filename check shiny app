@@ -1,0 +1,36 @@
+#I use the package shinytest to test my shiny apps. shinytest uses phantomJS to manipulate the app (i.e. simulate button presses etc.)
+
+#An entry in testthat/test-shinyapp.R looks something like:
+
+test_that("Shiny template works", {
+  app <- shinytest::ShinyDriver$new("Path_To_ShinyApp/"))
+
+  # plot changes
+  # first click makes plot
+  testthat::expect_false(length(grepl("^(data:image/png;base64)",
+                                      app$getAllValues()$output$plot1$src)) > 0)
+  app$setInputs(apply = "click")
+  testthat::expect_true(length(grepl("^(data:image/png;base64)",
+                                      app$getAllValues()$output$plot1$src)) > 0)
+  testthat::expect_true(grepl("^(data:image/png;base64)",
+                              app$getAllValues()$output$plot1$src))
+
+  # are subsequent changes applied?
+  testthat::expect_identical(app$getAllValues()$input$xVar, "mpg")
+  testthat::expect_true(
+    grepl("      mpg             cyl", app$getAllValues()$output$summary1))
+  app$setInputs(xVar = "drat")
+  app$setInputs(apply = "click")
+  testthat::expect_true(
+    grepl("      drat            cyl", app$getAllValues()$output$summary1))
+
+  # # test for reactive
+  # shinytest::expectUpdate(app, xVar = "wt", output = "plot1" )
+  # shinytest::expectUpdate(app, yVar = "drat", output = "plot1" )
+  # shinytest::expectUpdate(app, xVar = "cyl", output = "summary1" )
+  # shinytest::expectUpdate(app, yVar = "mpg", output = "summary1" )
+
+  # cleanup
+  app$stop()
+  unlink(paste0(ws2us(testDir),"_ShinyApp"), recursive = TRUE)
+})
